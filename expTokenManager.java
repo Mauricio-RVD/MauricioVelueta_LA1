@@ -1410,6 +1410,24 @@ static void TokenLexicalActions(Token matchedToken)
                 matchedToken.image = "Disturbio (Cualquier Intensidad)";
             }
          break;
+      case 19 :
+        if (image == null)
+            image = new StringBuffer();
+        image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
+        String lat = image.toString();
+        String direcLat = lat.substring(lat.length() - 1);
+        if(direcLat.equals("S")){ matchedToken.image = "-" + lat.substring(0,lat.length() - 1);}
+        else{ matchedToken.image = lat.substring(0,lat.length() - 1);}
+         break;
+      case 20 :
+        if (image == null)
+            image = new StringBuffer();
+        image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
+        String lon = image.toString();
+        String direcLon = lon.substring(lon.length() - 1);
+        if(direcLon.equals("W")){ matchedToken.image = "-" + lon.substring(0,lon.length() - 1);}
+        else{ matchedToken.image = lon.substring(0,lon.length() - 1);}
+         break;
       case 26 :
         if (image == null)
             image = new StringBuffer();
