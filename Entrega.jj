@@ -1,0 +1,361 @@
+PARSER_BEGIN(exp)
+class exp {
+    public static void main(String args[]) throws ParseException{
+        try {
+            exp analizador = new exp(System.in);
+            System.out.println("ocean,numCycl,year,name,numTrcks,yearTrck,monthTrck,dayTrck,hourTrck,minutsTrck,recordId,statusSys,latitude,longitude,maxSustWin,minPress,34ktNE,34ktSE,34ktSW,34ktNW,50ktNE,50ktSE,50ktSW,50ktNW,64ktNE,64ktSE,64ktSW,64ktNW,radMaxWind");
+            analizador.Start();
+            System.out.println("Fin del doc");
+        } catch(ParseException e){
+            System.out.println("Error kk");
+            System.out.println (e.getMessage());
+        }
+    }
+}
+PARSER_END(exp)
+
+TOKEN:
+{
+    <#Letra: ["a"-"z","A"-"Z"]>
+    |<#Numero: ["0"-"9"]>
+    |<#Decimal: (<Numero>)+ "." (<Numero>)+>
+}
+
+// Lanzadores de estados
+TOKEN:
+{
+    <Oceano: "AL" | "EP" | "CP"> {
+            if(image.toString().equals("AL")){ matchedToken.image = "Atlantico";}
+            else if(image.toString().equals("EP")){matchedToken.image = "Pacifico Noreste";}
+            else {matchedToken.image = "Pacifico Central Norte";}
+            } : PT_NCICLON
+    |<Anio_reg:(<Numero>){4}> : PT_MES
+}
+
+SKIP:
+{
+    " " | "," | "\n" | "\r"
+}
+
+// Estado para la cabecera
+<CABECERA>TOKEN:
+{
+    <Nombre: (<Letra>)+("-")?((<Letra>)+|(<Numero>)+)?>
+    |<Numero_registros: (<Numero>)+> : DEFAULT
+}
+
+<PT_NCICLON> TOKEN:
+{
+    <Numero_ciclon: (<Numero>){2}> : PT_ANIO
+}
+
+<PT_ANIO> TOKEN:
+{
+    <Anio: (<Numero>){4}> : CABECERA
+}
+
+<CABECERA> SKIP:
+{
+    " " | ","
+}
+
+// Estado para los registros
+<REGISTROS> TOKEN:
+{
+    <Hora_reg:(<Numero>){2}> : PT_MINUT
+    |<Identificador_registro: <Letra>>
+    |<Estado: (<Letra>){2}> {
+            // Completar texto de retorno
+            String token = image.toString();
+            if(token.equals("TD")){
+                matchedToken.image = "Ciclon Tropical con la Intensidad de una Depresion Tropical (<34 Nudos)";
+            }else if(token.equals("TS")){
+                matchedToken.image = "Ciclon Tropical con la Intensidad de una Tormenta Tropical (34-63 Nudos)";
+            }else if(token.equals("HU")){
+                matchedToken.image = "Ciclon Tropical con la Intensidad de un Huracan (>=64 Nudos)";
+            }else if(token.equals("EX")){
+                matchedToken.image = "Ciclon Extratropical (Cualquier Intensidad)";
+            }else if(token.equals("SD")){
+                matchedToken.image = "Ciclon Subtropical con la Intensidad de una Depresion Tropical (<34 Nudos)";
+            }else if(token.equals("SS")){
+                matchedToken.image = "Ciclon Subtropical con la Intensidad de una Tormenta Tropical (>=34 Nudos)";
+            }else if(token.equals("LO")){
+                matchedToken.image = "Bajas que no son consideradas Ciclon Tropical, ni Ciclon Subtropical ni Ciclon Extratropical (Cualquier Intensidad)";
+            }else if(token.equals("WV")){
+                matchedToken.image = "Onda Tropical (Cualquier Intensidad)";
+            }else{
+                matchedToken.image = "Disturbio (Cualquier Intensidad)";
+            }
+    }
+    |<Latitud: ("-")?<Decimal>("N"|"S")>
+    |<Longitud: ("-")?<Decimal>("W"|"E")> : PT_VMAX
+}
+
+<PT_MES> TOKEN:
+{
+    <Mes_reg:(<Numero>){2}> : PT_DIA
+}
+<PT_DIA> TOKEN:
+{
+    <Dia_reg:(<Numero>){2}> : REGISTROS
+}
+<PT_MINUT> TOKEN:
+{
+    <Minutos_reg:(<Numero>){2}> : REGISTROS
+}
+
+<REGISTROS> SKIP:
+{
+    " " | ","
+}
+
+// Estados para los max y min
+<PT_VMAX> TOKEN:
+{
+    <Vientos_max:("-")?(<Numero>)+> {
+        if(image.toString().equals("-999")){
+            matchedToken.image = "N/A";
+            }
+        }: PT_PMIN
+}
+<PT_VMAX> SKIP:
+{
+    " " | ","
+}
+<PT_PMIN> TOKEN:
+{
+    <Pres_min:("-")?(<Numero>)+> {
+        if(image.toString().equals("-999")){
+            matchedToken.image = "N/A";
+            }
+        }: PT_META
+}
+<PT_PMIN> SKIP:
+{
+    " " | ","
+}
+
+// Estados para metadatos
+<PT_META> TOKEN:
+{
+    <Meta:("-")?(<Numero>)+> {
+        if(image.toString().equals("-999")){
+            matchedToken.image = "N/A";
+            }
+        }
+    |<Retornar: "\n">: DEFAULT
+}
+<PT_META> SKIP:
+{
+    " " | "," | "\r"
+}
+
+//Reglas
+String Fecha():
+{
+    Token temporal;
+    String cadena = "";
+}
+{
+    // Generar cadena de retorno
+    temporal = <Anio_reg>
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Mes_reg>
+    {
+        cadena += temporal.image + ", ";
+    }  
+    temporal = <Dia_reg>
+    {
+        cadena += temporal.image + ", ";
+        return cadena;
+    }
+}
+
+String Tiempo():
+{
+    Token temporal;
+    String cadena = "";
+}
+{
+    // Generar cadena de retorno
+    temporal = <Hora_reg> 
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Minutos_reg>
+    {
+        cadena += temporal.image + ", ";
+        return cadena;
+    }
+}
+
+String Informacion_ciclon():
+{
+    Token temporal;
+    String cadena = "";
+}
+{
+    //Generar cadena de retorno
+    temporal = <Oceano> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Numero_ciclon>
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Anio>
+    {
+        cadena += temporal.image + ", ";
+        return cadena;
+    }
+}
+
+String Identificador():
+{
+    String cadena;
+    Token temporal;
+}
+{
+    // Generar cadena de retorno
+    cadena = Informacion_ciclon()
+    temporal = <Nombre> 
+    {
+        cadena += temporal + ", ";
+    }
+    temporal = <Numero_registros>
+    {
+        cadena += temporal + ", ";
+        return cadena;
+    }
+}
+
+String Metadatos():
+{
+    Token temporal;
+    String cadena = "";
+}
+{
+    // Generar cadena de retorno
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta>
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Meta>
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta>
+    {
+        cadena += temporal.image + ", ";
+    } 
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta> 
+    {
+        cadena += temporal.image + ", ";
+    }
+    temporal = <Meta>
+    {
+        cadena += temporal.image;
+    }
+    (<Retornar>)*{
+        return cadena;
+    }
+}
+
+String Registro():
+{
+    Token temporal;
+    String cadena, cadena_temporal;
+}
+{
+    // Generar cadena de retorno
+    cadena = Fecha()
+    cadena_temporal = Tiempo()
+    {
+        cadena += cadena_temporal;
+    }
+    // Capturar en caso de que no se encuentre un identificador del registro
+    try {
+        temporal = <Identificador_registro>
+        {
+            cadena += temporal.image + ", ";
+        }
+        }
+    catch (ParseException e) {
+            cadena += "NULL, ";
+        }
+    temporal = <Estado>
+    {
+        cadena += temporal + ", ";
+    } 
+    temporal = <Latitud>
+    {
+        cadena += temporal + ", ";
+    } 
+    temporal = <Longitud> 
+    {
+        cadena += temporal + ", ";
+    } 
+    temporal = <Vientos_max> 
+    {
+        cadena += temporal + ", ";
+    } 
+    temporal = <Pres_min>
+    {
+        cadena += temporal + ", ";
+    }  
+    cadena_temporal = Metadatos()
+    {
+        cadena += cadena_temporal;
+        return cadena;
+    }
+}
+
+void Start():
+{
+    String cabecera, registro;
+}
+{
+    (
+        cabecera = Identificador()
+        (
+            registro = Registro()
+            {System.out.println(cabecera + registro);}
+        )+
+    )+
+    <EOF>
+}

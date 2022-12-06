@@ -1,0 +1,6 @@
+Error 1 
+Lexical error at line 31150, column 126.  Encountered: "." (46), after : ""
+Error 2
+Lexical error at line 31183, column 124.  Encountered: "S" (83), after : ""
+Error 3
+Lexical error at line 31196, column 17.  Encountered: ";" (59), after : ""
