@@ -1403,7 +1403,7 @@ static void TokenLexicalActions(Token matchedToken)
             }else if(token.equals("SS")){
                 matchedToken.image = "Ciclon Subtropical con la Intensidad de una Tormenta Tropical (>=34 Nudos)";
             }else if(token.equals("LO")){
-                matchedToken.image = "Bajas que no son consideradas Ciclon Tropical, ni Ciclon Subtropical ni Ciclon Extratropical (Cualquier Intensidad)";
+                matchedToken.image = "Bajas que no son consideradas Ciclon Tropical ni Ciclon Subtropical ni Ciclon Extratropical (Cualquier Intensidad)";
             }else if(token.equals("WV")){
                 matchedToken.image = "Onda Tropical (Cualquier Intensidad)";
             }else{
